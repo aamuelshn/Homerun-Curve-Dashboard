@@ -10,7 +10,8 @@ from urllib.parse import urlencode
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
@@ -79,19 +80,6 @@ def _payload(frame: pd.DataFrame, player: dict[str, Any] | None = None, source: 
         "summary": career_summary(normalized),
         "home_runs": _serialize(normalized),
     }
-
-
-@app.get("/", response_class=HTMLResponse)
-def root() -> FileResponse:
-    return FileResponse(PUBLIC / "index.html", media_type="text/html")
-
-
-@app.get("/{filename}", include_in_schema=False)
-def static_asset(filename: str) -> FileResponse:
-    if filename not in {"app.js", "styles.css"}:
-        raise HTTPException(status_code=404)
-    media = "application/javascript" if filename.endswith(".js") else "text/css"
-    return FileResponse(PUBLIC / filename, media_type=media)
 
 
 @app.get("/api/health")
@@ -173,3 +161,6 @@ async def upload_csv(file: UploadFile = File(...)) -> dict[str, Any]:
 def demo() -> dict[str, Any]:
     raw = make_demo_home_runs()
     return _payload(raw, player={"full_name": "Synthetic Demo"}, source="Synthetic demo")
+
+
+app.mount("/", StaticFiles(directory=PUBLIC, html=True), name="frontend")

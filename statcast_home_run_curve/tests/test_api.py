@@ -14,6 +14,10 @@ def test_root_loads():
     assert 'Home Run Career Curve' in response.text
     assert 'Streamlit' not in response.text
 
+    stylesheet = client.get('/styles.css')
+    assert stylesheet.status_code == 200
+    assert stylesheet.headers['content-type'].startswith('text/css')
+
 def test_demo_returns_home_runs():
     response = client.get('/api/demo')
     assert response.status_code == 200
