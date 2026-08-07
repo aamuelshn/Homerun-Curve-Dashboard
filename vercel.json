@@ -1,8 +1,3 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "statcast_home_run_curve/index.py": {
-      "includeFiles": "statcast_home_run_curve/public/**"
-    }
-  }
+  "$schema": "https://openapi.vercel.sh/vercel.json"
 }

@@ -5,8 +5,8 @@ Validated on August 6, 2026.
 ## Passed
 
 - Python compilation for `index.py` and `src/`
-- JavaScript syntax check for `public/app.js`
-- 11 automated Python tests
+- JavaScript syntax check for `../public/app.js`
+- 12 automated Python tests
 - FastAPI `/api/health` local request
 - Root HTML local request
 - JavaScript asset local request

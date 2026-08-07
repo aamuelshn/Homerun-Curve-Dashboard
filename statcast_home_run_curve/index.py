@@ -9,8 +9,8 @@ from urllib.parse import urlencode
 
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, File, HTTPException, Query, Response, UploadFile
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 ROOT = Path(__file__).resolve().parent
@@ -23,7 +23,7 @@ from src.demo import make_demo_home_runs
 from src.mlb_client import MLBVideoError, PlayerLookupError, resolve_home_run_video_url, search_players
 from src.savant_client import SavantDataError, fetch_career_home_runs
 
-PUBLIC = ROOT / "public"
+PUBLIC = ROOT.parent / "public"
 
 app = FastAPI(title="Home Run Career Curve")
 
@@ -80,6 +80,13 @@ def _payload(frame: pd.DataFrame, player: dict[str, Any] | None = None, source: 
         "summary": career_summary(normalized),
         "home_runs": _serialize(normalized),
     }
+
+
+@app.get("/", include_in_schema=False)
+def root() -> Response:
+    if PUBLIC.is_dir():
+        return FileResponse(PUBLIC / "index.html", media_type="text/html")
+    return RedirectResponse("/index.html", status_code=307)
 
 
 @app.get("/api/health")
@@ -163,4 +170,5 @@ def demo() -> dict[str, Any]:
     return _payload(raw, player={"full_name": "Synthetic Demo"}, source="Synthetic demo")
 
 
-app.mount("/", StaticFiles(directory=PUBLIC, html=True), name="frontend")
+if PUBLIC.is_dir():
+    app.mount("/", StaticFiles(directory=PUBLIC, html=True), name="frontend")

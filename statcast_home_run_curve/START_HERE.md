@@ -10,9 +10,9 @@ This version was rewritten specifically for Vercel and contains **no Streamlit**
 
 Streamlit previously acted as both the website UI and Python app server. It has been replaced by:
 
-- `public/index.html` — visible page structure
-- `public/styles.css` — appearance
-- `public/app.js` — search, filters, charts, hover behavior
+- `../public/index.html` — visible page structure
+- `../public/styles.css` — appearance
+- `../public/app.js` — search, filters, charts, hover behavior
 - `index.py` — FastAPI endpoints that talk to MLB and Baseball Savant
 
 The Baseball Savant data-cleaning code in `src/` is retained.
