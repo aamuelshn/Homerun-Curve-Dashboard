@@ -1,2 +1,2 @@
 [tool.vercel]
-entrypoint = "statcast_home_run_curve 2.index:app"
+entrypoint = "statcast_home_run_curve.index:app"
