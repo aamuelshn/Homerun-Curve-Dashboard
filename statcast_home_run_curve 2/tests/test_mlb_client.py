@@ -43,3 +43,25 @@ def test_player_search_ranks_exact_name_first(monkeypatch) -> None:
     assert results[0].player_id == 660271
     assert results[0].position == "DH"
     assert results[0].debut_date.year == 2018
+
+
+def test_home_run_video_uses_exact_at_bat_and_pitch(monkeypatch) -> None:
+    plays = (
+        {
+            "about": {"atBatIndex": 17},
+            "result": {"eventType": "home_run"},
+            "playEvents": [
+                {"pitchNumber": 3, "playId": "earlier-play"},
+                {
+                    "pitchNumber": 4,
+                    "playId": "0940f201-99d4-426b-9f0e-f6686c25473f",
+                    "details": {"isInPlay": True},
+                },
+            ],
+        },
+    )
+    monkeypatch.setattr(mlb_client, "_game_plays", lambda game_pk: plays)
+
+    url = mlb_client.resolve_home_run_video_url(746362, 18, 4)
+
+    assert url.endswith("playId=0940f201-99d4-426b-9f0e-f6686c25473f")

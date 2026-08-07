@@ -16,6 +16,8 @@ def test_demo_normalizes_and_orders_home_runs() -> None:
     assert cleaned["home_run_distance"].notna().all()
     assert cleaned["launch_speed"].notna().all()
     assert cleaned["launch_angle"].notna().all()
+    assert cleaned["spray_x"].notna().all()
+    assert cleaned["spray_y"].notna().all()
     assert cleaned["matchup"].str.contains(" @ ").all()
 
 
@@ -37,3 +39,8 @@ def test_career_summary_uses_home_run_metrics() -> None:
     assert summary["home_runs"] == 15
     assert summary["longest"] == cleaned["home_run_distance"].max()
     assert summary["hardest"] == cleaned["launch_speed"].max()
+    values = sorted(cleaned["launch_speed"].tolist())
+    rank = (len(values) - 1) * 0.9
+    lower = int(rank)
+    expected = values[lower] + (values[lower + 1] - values[lower]) * (rank - lower)
+    assert summary["ev90"] == expected

@@ -4,15 +4,17 @@ from datetime import date
 from io import StringIO
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
-from src.config import DEMO_DATA_PATH, STATCAST_METRICS_START_YEAR
+from src.config import STATCAST_METRICS_START_YEAR
 from src.data import HomeRunDataError, career_summary, normalize_home_runs
-from src.mlb_client import PlayerLookupError, search_players
+from src.demo import make_demo_home_runs
+from src.mlb_client import MLBVideoError, PlayerLookupError, resolve_home_run_video_url, search_players
 from src.savant_client import SavantDataError, fetch_career_home_runs
 
 ROOT = Path(__file__).resolve().parent
@@ -46,11 +48,22 @@ def _serialize(frame: pd.DataFrame) -> list[dict[str, Any]]:
         "estimated_slg_using_speedangle", "delta_home_win_exp", "delta_run_exp",
         "des", "game_url", "video_url", "rolling_distance_10",
         "rolling_exit_velocity_10", "rolling_launch_angle_10",
+        "game_pk", "at_bat_number", "pitch_number", "hc_x", "hc_y",
+        "spray_angle", "spray_x", "spray_y",
     ]
     present = [c for c in columns if c in frame.columns]
     records: list[dict[str, Any]] = []
     for row in frame[present].to_dict(orient="records"):
-        records.append({key: _clean_value(value) for key, value in row.items()})
+        record = {key: _clean_value(value) for key, value in row.items()}
+        if not record.get("video_url") and record.get("game_pk") and record.get("at_bat_number"):
+            params = {
+                "game_pk": int(record["game_pk"]),
+                "at_bat_number": int(record["at_bat_number"]),
+            }
+            if record.get("pitch_number"):
+                params["pitch_number"] = int(record["pitch_number"])
+            record["video_url"] = f"/api/video?{urlencode(params)}"
+        records.append(record)
     return records
 
 
@@ -80,6 +93,19 @@ def static_asset(filename: str) -> FileResponse:
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/api/video")
+def home_run_video(
+    game_pk: int = Query(gt=0),
+    at_bat_number: int = Query(gt=0),
+    pitch_number: int | None = Query(default=None, gt=0),
+) -> RedirectResponse:
+    try:
+        url = resolve_home_run_video_url(game_pk, at_bat_number, pitch_number)
+    except MLBVideoError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return RedirectResponse(url, status_code=302)
 
 
 @app.get("/api/search")
@@ -141,5 +167,5 @@ async def upload_csv(file: UploadFile = File(...)) -> dict[str, Any]:
 
 @app.get("/api/demo")
 def demo() -> dict[str, Any]:
-    raw = pd.read_csv(DEMO_DATA_PATH, low_memory=False)
+    raw = make_demo_home_runs()
     return _payload(raw, player={"full_name": "Synthetic Demo"}, source="Synthetic demo")

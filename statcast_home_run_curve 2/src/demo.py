@@ -31,6 +31,8 @@ def make_demo_home_runs(n: int = 92, seed: int = 42) -> pd.DataFrame:
         launch_speed = float(np.clip(rng.normal(105.5, 5.8), 89, 121))
         launch_angle = float(np.clip(rng.normal(27.0, 7.0), 10, 48))
         distance = float(np.clip(260 + 1.25 * launch_speed + 1.7 * launch_angle + rng.normal(0, 24), 330, 485))
+        spray_angle = float(np.clip(rng.normal(4, 22), -43, 43))
+        spray_radius = 145.0
         balls = int(rng.integers(0, 4))
         strikes = int(rng.integers(0, 3))
         inning = int(rng.integers(1, 10))
@@ -64,8 +66,10 @@ def make_demo_home_runs(n: int = 92, seed: int = 42) -> pd.DataFrame:
                 "hit_distance_sc": round(distance),
                 "launch_speed": round(launch_speed, 1),
                 "launch_angle": round(launch_angle),
+                "hc_x": round(125.42 + np.sin(np.radians(spray_angle)) * spray_radius, 2),
+                "hc_y": round(198.27 - np.cos(np.radians(spray_angle)) * spray_radius, 2),
                 "game_pk": 700000 + index,
-                "sv_id": f"demo-play-{index:04d}",
+                "sv_id": "",
                 "estimated_ba_using_speedangle": round(float(np.clip(0.62 + (launch_speed - 100) / 45, 0.25, 0.99)), 3),
                 "estimated_woba_using_speedangle": round(float(np.clip(1.35 + (launch_speed - 100) / 55, 0.8, 2.0)), 3),
                 "estimated_slg_using_speedangle": round(float(np.clip(2.6 + (launch_speed - 100) / 20, 1.4, 4.0)), 3),

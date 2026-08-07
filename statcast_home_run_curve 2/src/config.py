@@ -9,6 +9,7 @@ APP_SUBTITLE = "Search a hitter and explore every home run available through Bas
 
 MLB_PEOPLE_SEARCH_URL = "https://statsapi.mlb.com/api/v1/people/search"
 MLB_PERSON_URL = "https://statsapi.mlb.com/api/v1/people/{player_id}"
+MLB_GAME_FEED_URL = "https://statsapi.mlb.com/api/v1.1/game/{game_pk}/feed/live"
 SAVANT_CSV_URL = "https://baseballsavant.mlb.com/statcast_search/csv"
 SAVANT_PLAYER_URL = "https://baseballsavant.mlb.com/savant-player/{slug}-{player_id}"
 SAVANT_GAME_URL = "https://baseballsavant.mlb.com/gamefeed?gamePk={game_pk}"

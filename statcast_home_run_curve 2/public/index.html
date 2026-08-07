@@ -88,8 +88,11 @@
           <div id="seasonChart" class="chart small"></div>
         </section>
         <section class="chart-section">
-          <h3>Launch profile</h3>
-          <div id="launchChart" class="chart small"></div>
+          <div class="chart-heading">
+            <h3>Home-run spray chart</h3>
+            <span id="stadiumLabel" class="chart-meta"></span>
+          </div>
+          <div id="launchChart" class="chart spray"></div>
         </section>
       </div>
 
@@ -105,15 +108,50 @@
         <div id="timelineChart" class="chart"></div>
       </section>
 
-      <section class="table-section">
-        <h3>Home-run log</h3>
+      <details class="table-section" open>
+        <summary>
+          <span>Home-run log</span>
+          <span id="logCount" class="log-count"></span>
+        </summary>
+        <div id="logFilters" class="log-filters">
+          <label class="log-search">Search
+            <input id="logSearch" type="search" placeholder="Matchup, team, pitch..." />
+          </label>
+          <label>Date from <input id="logDateFrom" type="date" /></label>
+          <label>Date to <input id="logDateTo" type="date" /></label>
+          <label>HR # min <input id="logHrMin" type="number" min="1" placeholder="Any" /></label>
+          <label>HR # max <input id="logHrMax" type="number" min="1" placeholder="Any" /></label>
+          <label>Distance min <input id="logDistanceMin" type="number" min="0" step="1" placeholder="ft" /></label>
+          <label>Distance max <input id="logDistanceMax" type="number" min="0" step="1" placeholder="ft" /></label>
+          <label>EV min <input id="logEvMin" type="number" min="0" step="0.1" placeholder="mph" /></label>
+          <label>EV max <input id="logEvMax" type="number" min="0" step="0.1" placeholder="mph" /></label>
+          <label>LA min <input id="logLaMin" type="number" step="1" placeholder="deg" /></label>
+          <label>LA max <input id="logLaMax" type="number" step="1" placeholder="deg" /></label>
+          <label>Pitch velo min <input id="logPitchVeloMin" type="number" min="0" step="0.1" placeholder="mph" /></label>
+          <label>Pitch velo max <input id="logPitchVeloMax" type="number" min="0" step="0.1" placeholder="mph" /></label>
+          <button id="resetLogFilters" class="secondary" type="button">Reset log filters</button>
+        </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>#</th><th>Date</th><th>Season</th><th>Matchup</th><th>Dist.</th><th>EV</th><th>LA</th><th>Pitch</th><th>Pitch velo</th><th>Description</th></tr></thead>
+            <thead>
+              <tr>
+                <th data-sort="home_run_number"><button type="button"># <span class="sort-indicator"></span></button></th>
+                <th data-sort="game_date"><button type="button">Date <span class="sort-indicator"></span></button></th>
+                <th data-sort="batting_team"><button type="button">Team <span class="sort-indicator"></span></button></th>
+                <th data-sort="matchup"><button type="button">Matchup <span class="sort-indicator"></span></button></th>
+                <th data-sort="home_run_distance"><button type="button">Dist. <span class="sort-indicator"></span></button></th>
+                <th data-sort="launch_speed"><button type="button">EV <span class="sort-indicator"></span></button></th>
+                <th data-sort="launch_angle"><button type="button">LA <span class="sort-indicator"></span></button></th>
+                <th data-sort="pitch_label"><button type="button">Pitch <span class="sort-indicator"></span></button></th>
+                <th data-sort="release_speed"><button type="button">Pitch velo <span class="sort-indicator"></span></button></th>
+                <th>Video</th>
+                <th>Description</th>
+              </tr>
+            </thead>
             <tbody id="hrTable"></tbody>
           </table>
         </div>
-      </section>
+      </details>
     </section>
   </main>
   <script src="/app.js"></script>

@@ -20,3 +20,5 @@ def test_demo_returns_home_runs():
     payload = response.json()
     assert len(payload['home_runs']) > 0
     assert 'launch_speed' in payload['home_runs'][0]
+    assert payload['summary']['ev90'] is not None
+    assert payload['home_runs'][0]['spray_x'] is not None

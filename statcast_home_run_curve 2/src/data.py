@@ -41,6 +41,8 @@ NUMERIC_COLUMNS = [
     "away_score",
     "delta_home_win_exp",
     "delta_run_exp",
+    "hc_x",
+    "hc_y",
 ]
 
 
@@ -148,6 +150,8 @@ def normalize_home_runs(raw: pd.DataFrame) -> pd.DataFrame:
         "outs_when_up": np.nan,
         "bat_score": np.nan,
         "fld_score": np.nan,
+        "hc_x": np.nan,
+        "hc_y": np.nan,
     }
     for column, default in defaults.items():
         if column not in frame.columns:
@@ -213,6 +217,17 @@ def normalize_home_runs(raw: pd.DataFrame) -> pd.DataFrame:
         + pd.to_numeric(frame["fld_score"], errors="coerce").fillna(0).astype(int).astype(str)
     )
 
+    # Savant's hit-location image uses home plate near (125.42, 198.27).
+    # Use the location for direction and tracked distance for radial position.
+    spray_dx = pd.to_numeric(frame["hc_x"], errors="coerce") - 125.42
+    spray_dy = 198.27 - pd.to_numeric(frame["hc_y"], errors="coerce")
+    spray_angle = np.degrees(np.arctan2(spray_dx, spray_dy))
+    valid_spray = spray_dx.notna() & spray_dy.notna() & spray_angle.between(-55, 55)
+    frame["spray_angle"] = pd.Series(spray_angle, index=frame.index).where(valid_spray)
+    spray_radians = np.radians(frame["spray_angle"])
+    frame["spray_x"] = frame["home_run_distance"] * np.sin(spray_radians)
+    frame["spray_y"] = frame["home_run_distance"] * np.cos(spray_radians)
+
     frame["game_url"] = frame["game_pk"].apply(
         lambda value: SAVANT_GAME_URL.format(game_pk=int(value)) if pd.notna(value) else ""
     )
@@ -222,7 +237,7 @@ def normalize_home_runs(raw: pd.DataFrame) -> pd.DataFrame:
     frame["video_url"] = play_ids.apply(
         lambda value: (
             SAVANT_VIDEO_URL.format(play_id=value)
-            if value and value.lower() != "nan" and len(value) >= 12
+            if re.fullmatch(r"[0-9a-fA-F-]{32,36}", value or "")
             else ""
         )
     )
@@ -259,9 +274,24 @@ def career_summary(frame: pd.DataFrame) -> dict[str, float | int | str | None]:
             "hardest": None,
             "average_distance": None,
             "average_exit_velocity": None,
+            "ev90": None,
             "first_date": None,
             "latest_date": None,
         }
+
+    exit_velocities = sorted(
+        float(value)
+        for value in pd.to_numeric(frame["launch_speed"], errors="coerce").dropna()
+    )
+    ev90 = None
+    if exit_velocities:
+        rank = (len(exit_velocities) - 1) * 0.90
+        lower = int(np.floor(rank))
+        upper = int(np.ceil(rank))
+        fraction = rank - lower
+        ev90 = exit_velocities[lower] + (
+            exit_velocities[upper] - exit_velocities[lower]
+        ) * fraction
 
     return {
         "home_runs": int(len(frame)),
@@ -269,6 +299,7 @@ def career_summary(frame: pd.DataFrame) -> dict[str, float | int | str | None]:
         "hardest": float(frame["launch_speed"].max()) if frame["launch_speed"].notna().any() else None,
         "average_distance": float(frame["home_run_distance"].mean()) if frame["home_run_distance"].notna().any() else None,
         "average_exit_velocity": float(frame["launch_speed"].mean()) if frame["launch_speed"].notna().any() else None,
+        "ev90": ev90,
         "first_date": frame["game_date"].min().date().isoformat(),
         "latest_date": frame["game_date"].max().date().isoformat(),
     }
