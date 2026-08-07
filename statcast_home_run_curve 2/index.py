@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 from io import StringIO
 from pathlib import Path
+import sys
 from typing import Any
 from urllib.parse import urlencode
 
@@ -11,13 +12,16 @@ import pandas as pd
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
+ROOT = Path(__file__).resolve().parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from src.config import STATCAST_METRICS_START_YEAR
 from src.data import HomeRunDataError, career_summary, normalize_home_runs
 from src.demo import make_demo_home_runs
 from src.mlb_client import MLBVideoError, PlayerLookupError, resolve_home_run_video_url, search_players
 from src.savant_client import SavantDataError, fetch_career_home_runs
 
-ROOT = Path(__file__).resolve().parent
 PUBLIC = ROOT / "public"
 
 app = FastAPI(title="Home Run Career Curve")
