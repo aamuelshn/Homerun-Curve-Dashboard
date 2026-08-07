@@ -1,2 +1,15 @@
+[project]
+name = "homerun-curve-dashboard"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.116,<1",
+    "numpy>=2.0,<3",
+    "pandas>=2.2,<3",
+    "python-multipart>=0.0.20,<1",
+    "requests>=2.32,<3",
+    "uvicorn>=0.35,<1",
+]
+
 [tool.vercel]
 entrypoint = "statcast_home_run_curve.index:app"
