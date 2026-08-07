@@ -49,6 +49,8 @@ Open http://127.0.0.1:8000
 
 ## Deploy to Vercel
 
+## Use this link: https://homeruncurvedashboard.vercel.app/
+
 Import this repository into Vercel or run `vercel` from the project root. Vercel recognizes the FastAPI `app` in `index.py` as a Python Function.
 
 The application never writes required state into the deployment directory. Baseball Savant's disk cache uses the OS temporary directory when writable and is only a performance optimization.
