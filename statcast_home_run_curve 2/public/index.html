@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Home Run Career Curve</title>
+  <meta name="description" content="Search an MLB hitter and explore every Statcast home run with interactive hover details." />
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">STATCAST EXPLORER</p>
+        <h1>Home Run Career Curve</h1>
+        <p class="subtitle">Search a hitter and explore every home run available through Baseball Savant.</p>
+      </div>
+    </header>
+
+    <section class="notice">
+      <strong>Coverage note:</strong> Statcast tracking metrics are most consistently available from 2015 forward. Players whose careers began earlier can therefore have a partial Statcast-era record.
+    </section>
+
+    <section class="search-card">
+      <div class="search-row">
+        <label class="sr-only" for="playerSearch">Player name</label>
+        <input id="playerSearch" type="search" placeholder="Search player — e.g. Shohei Ohtani" autocomplete="off" />
+        <button id="searchBtn" type="button">Search</button>
+      </div>
+      <div id="matches" class="matches" hidden></div>
+      <div class="advanced-grid">
+        <label>Start year
+          <input id="startYear" type="number" min="2008" max="2100" value="2015" />
+        </label>
+        <label>End year
+          <input id="endYear" type="number" min="2008" max="2100" />
+        </label>
+        <label>Game type
+          <select id="gameType">
+            <option value="R">Regular season</option>
+            <option value="PO">Postseason</option>
+            <option value="R,PO">Regular + postseason</option>
+          </select>
+        </label>
+        <div class="action-cell"><button id="loadBtn" class="primary" type="button" disabled>Load home runs</button></div>
+      </div>
+      <div class="fallback-row">
+        <button id="demoBtn" class="secondary" type="button">Load demo</button>
+        <label class="upload-label">Upload Savant CSV <input id="csvUpload" type="file" accept=".csv,text/csv" /></label>
+      </div>
+      <p id="status" class="status" aria-live="polite"></p>
+    </section>
+
+    <section id="results" hidden>
+      <div class="result-head">
+        <div>
+          <p id="sourceLabel" class="eyebrow"></p>
+          <h2 id="playerTitle">Player</h2>
+        </div>
+        <button id="downloadBtn" class="secondary" type="button">Download CSV</button>
+      </div>
+
+      <div id="metrics" class="metrics"></div>
+
+      <div class="filter-bar">
+        <label>Seasons <select id="seasonFilter" multiple></select></label>
+        <label>Teams <select id="teamFilter" multiple></select></label>
+        <label>Career curve metric
+          <select id="curveMetric">
+            <option value="home_run_number">Career HR number</option>
+            <option value="home_run_distance">Distance</option>
+            <option value="launch_speed">Exit velocity</option>
+            <option value="launch_angle">Launch angle</option>
+          </select>
+        </label>
+        <button id="resetFilters" class="secondary" type="button">Reset filters</button>
+      </div>
+
+      <section class="chart-section">
+        <h3 id="curveTitle">Career home-run progression</h3>
+        <div id="careerChart" class="chart"></div>
+      </section>
+
+      <div class="two-col">
+        <section class="chart-section">
+          <h3>Home runs by season</h3>
+          <div id="seasonChart" class="chart small"></div>
+        </section>
+        <section class="chart-section">
+          <h3>Launch profile</h3>
+          <div id="launchChart" class="chart small"></div>
+        </section>
+      </div>
+
+      <section class="chart-section">
+        <div class="timeline-head">
+          <h3>Metric timeline</h3>
+          <select id="timelineMetric">
+            <option value="home_run_distance">Distance</option>
+            <option value="launch_speed">Exit velocity</option>
+            <option value="launch_angle">Launch angle</option>
+          </select>
+        </div>
+        <div id="timelineChart" class="chart"></div>
+      </section>
+
+      <section class="table-section">
+        <h3>Home-run log</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Date</th><th>Season</th><th>Matchup</th><th>Dist.</th><th>EV</th><th>LA</th><th>Pitch</th><th>Pitch velo</th><th>Description</th></tr></thead>
+            <tbody id="hrTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
