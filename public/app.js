@@ -676,6 +676,12 @@ function resetFilters() {
   applyFilters();
 }
 
+function selectAllFilters(element) {
+  element.querySelectorAll('input[type="checkbox"]')
+    .forEach((input) => { input.checked = true; });
+  applyFilters();
+}
+
 function resetLogFilters(render = true) {
   document.querySelectorAll("#logFilters input").forEach((input) => { input.value = ""; });
   if (render) renderTable();
@@ -706,6 +712,8 @@ $("csvUpload").addEventListener("change", (event) => uploadCsv(event.target.file
 $("seasonFilter").addEventListener("change", applyFilters);
 $("teamFilter").addEventListener("change", applyFilters);
 $("resetFilters").addEventListener("click", resetFilters);
+$("selectAllSeasons").addEventListener("click", () => selectAllFilters($("seasonFilter")));
+$("selectAllTeams").addEventListener("click", () => selectAllFilters($("teamFilter")));
 $("downloadBtn").addEventListener("click", downloadCsv);
 $("resetLogFilters").addEventListener("click", () => resetLogFilters());
 

@@ -15,6 +15,8 @@ def test_root_loads():
     assert 'Streamlit' not in response.text
     assert 'Home-run metric distributions' in response.text
     assert 'distanceDistribution' in response.text
+    assert 'id="selectAllSeasons"' in response.text
+    assert 'id="selectAllTeams"' in response.text
     assert 'id="curveMetric"' not in response.text
     assert 'id="careerChart"' not in response.text
 
@@ -27,6 +29,7 @@ def test_root_loads():
     assert 'MLB_HR_BENCHMARKS' in script.text
     assert 'scrollZoom: true' in script.text
     assert 'type="checkbox"' in script.text
+    assert 'selectAllFilters' in script.text
 
 def test_demo_returns_home_runs():
     response = client.get('/api/demo')
