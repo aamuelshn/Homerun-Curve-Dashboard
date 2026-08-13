@@ -185,10 +185,29 @@ function loadPayload(data) {
   $("results").hidden = false;
   $("playerTitle").textContent = state.player?.full_name || "Home runs";
   $("sourceLabel").textContent = state.source;
+  renderPlayerHeadshot();
   setupFilters();
   resetLogFilters(false);
   applyFilters();
   window.scrollTo({ top: $("results").offsetTop - 20, behavior: "smooth" });
+}
+
+function renderPlayerHeadshot() {
+  const headshot = $("playerHeadshot");
+  const playerId = Number(state.player?.player_id);
+  const playerName = state.player?.full_name || "MLB player";
+  headshot.hidden = true;
+  headshot.removeAttribute("src");
+  headshot.alt = "";
+  if (!Number.isInteger(playerId) || playerId <= 0) return;
+
+  headshot.onload = () => { headshot.hidden = false; };
+  headshot.onerror = () => {
+    headshot.hidden = true;
+    headshot.removeAttribute("src");
+  };
+  headshot.alt = `${playerName} headshot`;
+  headshot.src = `https://content.mlb.com/images/headshots/current/60x60/${playerId}@3x.png`;
 }
 
 function unique(values) {
@@ -222,7 +241,21 @@ function applyFilters() {
     seasons.has(String(row.season))
     && teams.has(String(row.batting_team))
   ));
+  syncFilterToggleButtons();
   renderAll();
+}
+
+function syncFilterToggleButton(element, button, groupName) {
+  const inputs = [...element.querySelectorAll('input[type="checkbox"]')];
+  const allSelected = inputs.length > 0 && inputs.every((input) => input.checked);
+  const action = allSelected ? "Deselect all" : "Select all";
+  button.querySelector("span").textContent = action;
+  button.setAttribute("aria-label", `${action} ${groupName}`);
+}
+
+function syncFilterToggleButtons() {
+  syncFilterToggleButton($("seasonFilter"), $("selectAllSeasons"), "seasons");
+  syncFilterToggleButton($("teamFilter"), $("selectAllTeams"), "teams");
 }
 
 function percentile(values, proportion) {
@@ -577,7 +610,7 @@ function renderSprayChart() {
     xaxis: { range: [-365, 365], visible: false, fixedrange: false },
     yaxis: { range: [-25, 485], visible: false, fixedrange: false, scaleanchor: "x", scaleratio: 1 },
     annotations,
-    dragmode: "zoom",
+    dragmode: "pan",
     legend: {
       orientation: "h",
       x: 0.5,
@@ -676,9 +709,10 @@ function resetFilters() {
   applyFilters();
 }
 
-function selectAllFilters(element) {
-  element.querySelectorAll('input[type="checkbox"]')
-    .forEach((input) => { input.checked = true; });
+function toggleAllFilters(element) {
+  const inputs = [...element.querySelectorAll('input[type="checkbox"]')];
+  const shouldSelect = !inputs.length || inputs.some((input) => !input.checked);
+  inputs.forEach((input) => { input.checked = shouldSelect; });
   applyFilters();
 }
 
@@ -712,8 +746,8 @@ $("csvUpload").addEventListener("change", (event) => uploadCsv(event.target.file
 $("seasonFilter").addEventListener("change", applyFilters);
 $("teamFilter").addEventListener("change", applyFilters);
 $("resetFilters").addEventListener("click", resetFilters);
-$("selectAllSeasons").addEventListener("click", () => selectAllFilters($("seasonFilter")));
-$("selectAllTeams").addEventListener("click", () => selectAllFilters($("teamFilter")));
+$("selectAllSeasons").addEventListener("click", () => toggleAllFilters($("seasonFilter")));
+$("selectAllTeams").addEventListener("click", () => toggleAllFilters($("teamFilter")));
 $("downloadBtn").addEventListener("click", downloadCsv);
 $("resetLogFilters").addEventListener("click", () => resetLogFilters());
 

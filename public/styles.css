@@ -496,6 +496,24 @@ summary:focus-visible {
   gap: 18px;
 }
 
+.player-identity {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 12px;
+}
+
+.player-headshot {
+  flex: 0 0 auto;
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  object-position: top center;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+}
+
 .result-head h2 {
   font-size: 1.45rem;
 }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Home Run Career Curve</title>
   <meta name="description" content="Search an MLB hitter and explore every Statcast home run with interactive distributions, spray charts, and video." />
-  <link rel="stylesheet" href="/styles.css?v=20260812-select-all" />
+  <link rel="stylesheet" href="/styles.css?v=20260812-profile-pan-toggle" />
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 </head>
@@ -78,9 +78,12 @@
 
       <section id="results" hidden>
         <div class="result-head">
-          <div>
-            <p id="sourceLabel" class="eyebrow"></p>
-            <h2 id="playerTitle">Player</h2>
+          <div class="player-identity">
+            <img id="playerHeadshot" class="player-headshot" alt="" decoding="async" hidden />
+            <div>
+              <p id="sourceLabel" class="eyebrow"></p>
+              <h2 id="playerTitle">Player</h2>
+            </div>
           </div>
           <button id="downloadBtn" class="button dark" type="button"><i data-lucide="download" aria-hidden="true"></i><span>Download CSV</span></button>
         </div>
@@ -100,7 +103,7 @@
               <legend class="sr-only">Seasons</legend>
               <div class="filter-group-heading">
                 <span>Seasons</span>
-                <button id="selectAllSeasons" class="filter-select-all" type="button" aria-label="Select all seasons"><i data-lucide="check-check" aria-hidden="true"></i><span>Select all</span></button>
+                <button id="selectAllSeasons" class="filter-select-all" type="button" aria-label="Select all seasons"><i data-lucide="list-checks" aria-hidden="true"></i><span>Select all</span></button>
               </div>
               <div id="seasonFilter" class="checkbox-list"></div>
             </fieldset>
@@ -108,7 +111,7 @@
               <legend class="sr-only">Teams</legend>
               <div class="filter-group-heading">
                 <span>Teams</span>
-                <button id="selectAllTeams" class="filter-select-all" type="button" aria-label="Select all teams"><i data-lucide="check-check" aria-hidden="true"></i><span>Select all</span></button>
+                <button id="selectAllTeams" class="filter-select-all" type="button" aria-label="Select all teams"><i data-lucide="list-checks" aria-hidden="true"></i><span>Select all</span></button>
               </div>
               <div id="teamFilter" class="checkbox-list"></div>
             </fieldset>
@@ -222,6 +225,6 @@
       </section>
     </main>
   </div>
-  <script src="/app.js?v=20260812-select-all"></script>
+  <script src="/app.js?v=20260812-profile-pan-toggle"></script>
 </body>
 </html>
