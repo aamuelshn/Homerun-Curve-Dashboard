@@ -41,6 +41,25 @@ const BALLPARKS = {
 };
 
 const DEFAULT_PARK = { name: "MLB ballpark", wall: [330, 375, 400, 375, 330] };
+const SEASON_COLORS = [
+  "#2563eb", "#dc2626", "#059669", "#d97706", "#7c3aed", "#0891b2",
+  "#db2777", "#65a30d", "#9333ea", "#ea580c", "#0f766e", "#4f46e5",
+];
+// Regular-season MLB home runs downloaded from Baseball Savant on 2026-08-12.
+const MLB_HR_BENCHMARKS = {
+  2015: { home_run_distance: { mean: 399.7974, n: 4758 }, launch_speed: { mean: 103.2079, n: 4764 }, launch_angle: { mean: 27.8617, n: 4764 } },
+  2016: { home_run_distance: { mean: 399.4928, n: 5493 }, launch_speed: { mean: 103.3530, n: 5503 }, launch_angle: { mean: 28.0769, n: 5503 } },
+  2017: { home_run_distance: { mean: 400.1411, n: 5955 }, launch_speed: { mean: 103.1515, n: 5989 }, launch_angle: { mean: 28.0673, n: 5989 } },
+  2018: { home_run_distance: { mean: 397.4549, n: 5469 }, launch_speed: { mean: 103.5343, n: 5565 }, launch_angle: { mean: 28.2171, n: 5565 } },
+  2019: { home_run_distance: { mean: 400.1326, n: 6691 }, launch_speed: { mean: 103.5489, n: 6719 }, launch_angle: { mean: 28.2195, n: 6719 } },
+  2020: { home_run_distance: { mean: 400.8634, n: 2299 }, launch_speed: { mean: 103.6279, n: 2301 }, launch_angle: { mean: 28.9483, n: 2301 } },
+  2021: { home_run_distance: { mean: 400.8842, n: 5933 }, launch_speed: { mean: 104.4359, n: 5933 }, launch_angle: { mean: 28.7136, n: 5933 } },
+  2022: { home_run_distance: { mean: 398.5012, n: 5213 }, launch_speed: { mean: 104.2519, n: 5213 }, launch_angle: { mean: 28.7750, n: 5213 } },
+  2023: { home_run_distance: { mean: 399.8371, n: 5862 }, launch_speed: { mean: 104.3241, n: 5866 }, launch_angle: { mean: 28.5760, n: 5866 } },
+  2024: { home_run_distance: { mean: 398.0039, n: 5444 }, launch_speed: { mean: 104.3081, n: 5450 }, launch_angle: { mean: 28.7200, n: 5450 } },
+  2025: { home_run_distance: { mean: 396.6994, n: 5646 }, launch_speed: { mean: 104.6383, n: 5648 }, launch_angle: { mean: 28.7546, n: 5648 } },
+  2026: { home_run_distance: { mean: 396.8827, n: 4143 }, launch_speed: { mean: 104.0136, n: 4149 }, launch_angle: { mean: 29.0342, n: 4149 } },
+};
 const $ = (id) => document.getElementById(id);
 $("endYear").value = new Date().getFullYear();
 
@@ -178,31 +197,30 @@ function unique(values) {
 }
 
 function setupFilters() {
-  fillMulti($("seasonFilter"), unique(state.all.map((row) => row.season)));
-  fillMulti($("teamFilter"), unique(state.all.map((row) => row.batting_team)));
+  fillChecks($("seasonFilter"), unique(state.all.map((row) => row.season)), "season");
+  fillChecks($("teamFilter"), unique(state.all.map((row) => row.batting_team)), "team");
 }
 
-function fillMulti(element, values) {
+function fillChecks(element, values, name) {
   element.innerHTML = "";
   values.forEach((value) => {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = value;
-    option.selected = true;
-    element.appendChild(option);
+    const label = document.createElement("label");
+    label.className = "checkbox-option";
+    label.innerHTML = `<input type="checkbox" name="${name}" value="${escapeHtml(value)}" checked><span>${escapeHtml(value)}</span>`;
+    element.appendChild(label);
   });
 }
 
-function selectedValues(element) {
-  return [...element.selectedOptions].map((option) => option.value);
+function checkedValues(element) {
+  return [...element.querySelectorAll('input[type="checkbox"]:checked')].map((input) => input.value);
 }
 
 function applyFilters() {
-  const seasons = new Set(selectedValues($("seasonFilter")));
-  const teams = new Set(selectedValues($("teamFilter")));
+  const seasons = new Set(checkedValues($("seasonFilter")));
+  const teams = new Set(checkedValues($("teamFilter")));
   state.filtered = state.all.filter((row) => (
-    (!seasons.size || seasons.has(String(row.season)))
-    && (!teams.size || teams.has(String(row.batting_team)))
+    seasons.has(String(row.season))
+    && teams.has(String(row.batting_team))
   ));
   renderAll();
 }
@@ -234,29 +252,11 @@ function videoUrl(row) {
   return state.source.toLowerCase().includes("demo") ? "" : (row.video_url || "");
 }
 
-function hoverText(row) {
-  return [
-    `<b>Career HR #${row.home_run_number ?? "—"}</b>`,
-    row.game_date_label,
-    row.matchup,
-    `${row.inning_label || ""} · Count ${row.count_label || "—"}`,
-    `Distance: ${fmt(row.home_run_distance, 0)} ft`,
-    `Exit velo: ${fmt(row.launch_speed, 1)} mph`,
-    `Launch angle: ${fmt(row.launch_angle, 0)}°`,
-    `Pitch: ${row.pitch_label || "—"} · ${fmt(row.release_speed, 1)} mph`,
-    `xBA: ${fmt(row.estimated_ba_using_speedangle, 3)} · xwOBA: ${fmt(row.estimated_woba_using_speedangle, 3)}`,
-    row.bat_speed != null ? `Bat speed: ${fmt(row.bat_speed, 1)} mph` : null,
-    row.base_state ? `Runners: ${row.base_state}` : null,
-    row.des,
-  ].filter(Boolean).join("<br>");
-}
-
 function renderAll() {
   renderMetrics();
-  renderCareer();
+  renderDistributions();
   renderSeason();
   renderSprayChart();
-  renderTimeline();
   renderTable();
 }
 
@@ -280,33 +280,197 @@ function renderMetrics() {
   `).join("");
 }
 
-function metricMeta(key) {
-  return {
-    home_run_number: ["Career home-run number", "HR #"],
-    home_run_distance: ["Home-run distance", "ft"],
-    launch_speed: ["Exit velocity", "mph"],
-    launch_angle: ["Launch angle", "°"],
-  }[key];
+const DISTRIBUTION_METRICS = [
+  { key: "home_run_distance", chartId: "distanceDistribution", label: "Distance", unit: "ft", digits: 0 },
+  { key: "launch_speed", chartId: "exitVelocityDistribution", label: "Exit velocity", unit: "mph", digits: 1 },
+  { key: "launch_angle", chartId: "launchAngleDistribution", label: "Launch angle", unit: "°", digits: 0 },
+];
+
+function seasonColorMap() {
+  const seasons = unique(state.all.map((row) => row.season));
+  return Object.fromEntries(seasons.map((season, index) => [String(season), SEASON_COLORS[index % SEASON_COLORS.length]]));
 }
 
-function renderCareer() {
-  const rows = state.filtered;
-  const key = $("curveMetric").value;
-  const [label, unit] = metricMeta(key);
-  $("curveTitle").textContent = key === "home_run_number" ? "Career home-run progression" : `${label} by home run`;
-  Plotly.react("careerChart", [{
-    x: rows.map((row) => row.game_date),
-    y: rows.map((row) => row[key]),
-    mode: "lines+markers",
-    line: { width: 2, color: "#178f9c" },
-    marker: { size: 7, color: "#178f9c", line: { width: 1, color: "#fff" } },
-    text: rows.map(hoverText),
-    hovertemplate: "%{text}<extra></extra>",
-  }], {
+function weightedMlbAverage(key) {
+  const selectedSeasons = checkedValues($("seasonFilter"));
+  const samples = selectedSeasons
+    .map((season) => MLB_HR_BENCHMARKS[season]?.[key])
+    .filter((sample) => sample && Number.isFinite(sample.mean) && sample.n > 0);
+  if (!samples.length) return null;
+  const total = samples.reduce((sum, sample) => sum + sample.n, 0);
+  return samples.reduce((sum, sample) => sum + sample.mean * sample.n, 0) / total;
+}
+
+function benchmarkSeasonLabel() {
+  const seasons = checkedValues($("seasonFilter"))
+    .map(Number)
+    .filter((season) => MLB_HR_BENCHMARKS[season])
+    .sort((a, b) => a - b);
+  if (!seasons.length) return "No benchmark seasons selected";
+  if (seasons.length === 1) return `MLB HR average · ${seasons[0]}`;
+  const consecutive = seasons.every((season, index) => index === 0 || season === seasons[index - 1] + 1);
+  if (consecutive) return `MLB HR average · ${seasons[0]}–${seasons.at(-1)}`;
+  if (seasons.length <= 4) return `MLB HR average · ${seasons.join(", ")}`;
+  return `MLB HR average · ${seasons.length} selected seasons`;
+}
+
+function standardDeviation(values) {
+  if (values.length < 2) return 0;
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+  const variance = values.reduce((sum, value) => sum + ((value - mean) ** 2), 0) / (values.length - 1);
+  return Math.sqrt(variance);
+}
+
+function densityCurve(values, benchmark) {
+  if (!values.length) return { x: [], y: [], maxDensity: 0 };
+  const sorted = [...values].sort((a, b) => a - b);
+  const deviation = standardDeviation(sorted);
+  const iqr = percentile([...sorted], 0.75) - percentile([...sorted], 0.25);
+  const spread = Math.min(deviation || Infinity, iqr > 0 ? iqr / 1.34 : Infinity);
+  const fallbackSpread = Math.max((sorted.at(-1) - sorted[0]) / 4, 1);
+  const bandwidth = Math.max(0.9 * (Number.isFinite(spread) ? spread : fallbackSpread) * (sorted.length ** -0.2), 0.35);
+  const endpoints = [sorted[0], sorted.at(-1), benchmark].filter(Number.isFinite);
+  const minimum = Math.min(...endpoints) - bandwidth * 3;
+  const maximum = Math.max(...endpoints) + bandwidth * 3;
+  const x = Array.from({ length: 120 }, (_, index) => minimum + ((maximum - minimum) * index / 119));
+  const normalizer = sorted.length * bandwidth * Math.sqrt(2 * Math.PI);
+  const y = x.map((position) => sorted.reduce(
+    (sum, value) => sum + Math.exp(-0.5 * (((position - value) / bandwidth) ** 2)),
+    0,
+  ) / normalizer);
+  return { x, y, maxDensity: Math.max(...y) };
+}
+
+function detailMarkup(row, metric = null) {
+  if (!row) return '<p class="detail-kicker">HOME-RUN DETAILS</p><h4>No home run selected</h4>';
+  const url = videoUrl(row);
+  const statRows = [
+    { key: "home_run_distance", label: "Distance", value: `${fmt(row.home_run_distance, 0)} ft` },
+    { key: "launch_speed", label: "Exit velocity", value: `${fmt(row.launch_speed, 1)} mph` },
+    { key: "launch_angle", label: "Launch angle", value: `${fmt(row.launch_angle, 0)}°` },
+  ];
+  if (metric) statRows.sort((left, right) => (left.key === metric.key ? -1 : right.key === metric.key ? 1 : 0));
+  const stats = statRows.map((stat) => `<div><dt>${stat.label}</dt><dd>${stat.value}</dd></div>`).join("");
+  return `
+    <p class="detail-kicker">HOME-RUN DETAILS</p>
+    <h4>Career HR #${row.home_run_number ?? "—"}</h4>
+    <p class="detail-context">${escapeHtml(row.game_date_label)} · ${escapeHtml(row.matchup)}</p>
+    <dl class="detail-stats">
+      ${stats}
+      <div><dt>Pitch</dt><dd>${escapeHtml(row.pitch_label || "—")} · ${fmt(row.release_speed, 1)} mph</dd></div>
+    </dl>
+    <p class="detail-description">${escapeHtml(row.des || "")}</p>
+    ${url ? `<a class="video-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">▶ Watch video</a>` : ""}
+  `;
+}
+
+function bindPointDetails(chart, target, metric = null) {
+  chart.removeAllListeners?.("plotly_hover");
+  chart.removeAllListeners?.("plotly_click");
+  chart.on("plotly_hover", (event) => {
+    const row = event.points?.find((point) => point.customdata)?.customdata;
+    if (row) target.innerHTML = detailMarkup(row, metric);
+  });
+  chart.on("plotly_click", (event) => {
+    const row = event.points?.find((point) => point.customdata)?.customdata;
+    if (row) target.innerHTML = detailMarkup(row, metric);
+    const url = row ? videoUrl(row) : "";
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
+  });
+}
+
+function renderDistribution(metric, detailTarget) {
+  const rows = state.filtered.filter((row) => Number.isFinite(Number(row[metric.key])));
+  const values = rows.map((row) => Number(row[metric.key]));
+  const benchmark = weightedMlbAverage(metric.key);
+  const density = densityCurve(values, benchmark);
+  const colors = seasonColorMap();
+  const rugDepth = density.maxDensity * 0.15 || 0.01;
+  const chart = $(metric.chartId);
+  const traces = [];
+
+  if (values.length) {
+    traces.push({
+      x: density.x,
+      y: density.y,
+      mode: "lines",
+      name: "Player HR density",
+      line: { width: 3, color: "#178f9c" },
+      fill: "tozeroy",
+      fillcolor: "rgba(23, 143, 156, 0.13)",
+      hoverinfo: "skip",
+    });
+    traces.push({
+      x: values,
+      y: rows.map((_, index) => -rugDepth * (0.34 + (index % 3) * 0.25)),
+      mode: "markers",
+      name: "Home runs",
+      marker: {
+        size: 8,
+        color: rows.map((row) => colors[String(row.season)]),
+        line: { color: "#fff", width: 1 },
+        opacity: 0.86,
+      },
+      customdata: rows,
+      hoverinfo: "none",
+    });
+  }
+
+  const shapes = Number.isFinite(benchmark) ? [{
+    type: "line",
+    x0: benchmark,
+    x1: benchmark,
+    y0: -rugDepth,
+    y1: density.maxDensity * 1.08,
+    line: { color: "#c2410c", width: 2, dash: "dot" },
+  }] : [];
+  const annotations = [];
+  if (Number.isFinite(benchmark)) {
+    annotations.push({
+      x: benchmark,
+      y: density.maxDensity * 1.08,
+      text: `MLB avg ${fmt(benchmark, metric.digits)} ${metric.unit}`,
+      showarrow: false,
+      xanchor: "left",
+      xshift: 6,
+      font: { size: 11, color: "#9a3412" },
+    });
+  }
+  if (!rows.length) {
+    annotations.push({
+      x: 0.5,
+      y: 0.5,
+      xref: "paper",
+      yref: "paper",
+      text: "No home runs match these filters",
+      showarrow: false,
+      font: { color: "#667085" },
+    });
+  }
+
+  Plotly.react(chart, traces, {
     ...baseLayout,
-    xaxis: { title: "Date", gridcolor: "#edf0f2" },
-    yaxis: { title: unit ? `${label} (${unit})` : label, gridcolor: "#edf0f2" },
-  }, plotConfig);
+    margin: { l: 58, r: 20, t: 28, b: 54 },
+    xaxis: { title: `${metric.label} (${metric.unit})`, gridcolor: "#edf0f2", fixedrange: true },
+    yaxis: {
+      title: "Density",
+      gridcolor: "#edf0f2",
+      rangemode: "tozero",
+      range: values.length ? [-rugDepth * 1.08, density.maxDensity * 1.18] : undefined,
+      fixedrange: true,
+    },
+    shapes,
+    annotations,
+    showlegend: false,
+  }, { ...plotConfig, displayModeBar: false });
+  bindPointDetails(chart, detailTarget, metric);
+}
+
+function renderDistributions() {
+  const detailTarget = $("distributionDetail");
+  detailTarget.innerHTML = detailMarkup(null);
+  $("benchmarkLabel").textContent = benchmarkSeasonLabel();
+  DISTRIBUTION_METRICS.forEach((metric) => renderDistribution(metric, detailTarget));
 }
 
 function renderSeason() {
@@ -340,13 +504,16 @@ function fieldPoint(distance, angle) {
 function renderSprayChart() {
   const team = latestTeam();
   const park = BALLPARKS[team] || DEFAULT_PARK;
+  const colors = seasonColorMap();
   const angles = [-45, -22.5, 0, 22.5, 45];
   const wall = park.wall.map((distance, index) => fieldPoint(distance, angles[index]));
   const fieldX = [0, ...wall.map((point) => point.x), 0];
   const fieldY = [0, ...wall.map((point) => point.y), 0];
   const rows = state.filtered.filter((row) => Number.isFinite(Number(row.spray_x)) && Number.isFinite(Number(row.spray_y)));
   const chart = $("launchChart");
+  const detailTarget = $("sprayDetail");
   $("stadiumLabel").textContent = `${park.name}${team ? ` · ${team}` : ""}`;
+  detailTarget.innerHTML = detailMarkup(null);
 
   const traces = [
     {
@@ -369,25 +536,25 @@ function renderSprayChart() {
       hoverinfo: "skip",
       showlegend: false,
     },
-    {
-      x: rows.map((row) => row.spray_x),
-      y: rows.map((row) => row.spray_y),
+  ];
+
+  unique(rows.map((row) => row.season)).forEach((season) => {
+    const seasonRows = rows.filter((row) => String(row.season) === String(season));
+    traces.push({
+      x: seasonRows.map((row) => row.spray_x),
+      y: seasonRows.map((row) => row.spray_y),
       mode: "markers",
+      name: String(season),
       marker: {
         size: 10,
-        color: rows.map((row) => row.season),
-        colorscale: [[0, "#2563eb"], [0.5, "#f59e0b"], [1, "#dc2626"]],
+        color: colors[String(season)],
         line: { color: "#fff", width: 1.3 },
-        opacity: 0.88,
-        showscale: rows.length > 1,
-        colorbar: { title: "Season", thickness: 10, len: 0.48, y: 0.78 },
+        opacity: 0.9,
       },
-      text: rows.map(hoverText),
-      customdata: rows.map((row) => [videoUrl(row)]),
-      hovertemplate: "%{text}<extra></extra>",
-      showlegend: false,
-    },
-  ];
+      customdata: seasonRows,
+      hoverinfo: "none",
+    });
+  });
 
   const annotations = wall.map((point, index) => ({
     x: point.x,
@@ -406,53 +573,27 @@ function renderSprayChart() {
 
   Plotly.react(chart, traces, {
     ...baseLayout,
-    margin: { l: 20, r: 20, t: 10, b: 15 },
-    xaxis: { range: [-365, 365], visible: false, fixedrange: true },
-    yaxis: { range: [-25, 485], visible: false, fixedrange: true, scaleanchor: "x", scaleratio: 1 },
+    margin: { l: 20, r: 20, t: 10, b: 58 },
+    xaxis: { range: [-365, 365], visible: false, fixedrange: false },
+    yaxis: { range: [-25, 485], visible: false, fixedrange: false, scaleanchor: "x", scaleratio: 1 },
     annotations,
-    showlegend: false,
-  }, { ...plotConfig, displayModeBar: false });
-
-  chart.removeAllListeners?.("plotly_click");
-  chart.on("plotly_click", (event) => {
-    const url = event.points?.[0]?.customdata?.[0];
-    if (url) window.open(url, "_blank", "noopener,noreferrer");
+    dragmode: "zoom",
+    legend: {
+      orientation: "h",
+      x: 0.5,
+      xanchor: "center",
+      y: -0.08,
+      yanchor: "top",
+      font: { size: 11 },
+    },
+    showlegend: rows.length > 0,
+  }, {
+    ...plotConfig,
+    displayModeBar: true,
+    scrollZoom: true,
+    modeBarButtonsToRemove: ["lasso2d", "select2d", "toImage", "hoverClosestCartesian", "hoverCompareCartesian"],
   });
-}
-
-function renderTimeline() {
-  const key = $("timelineMetric").value;
-  const [label, unit] = metricMeta(key);
-  const rollingKey = {
-    home_run_distance: "rolling_distance_10",
-    launch_speed: "rolling_exit_velocity_10",
-    launch_angle: "rolling_launch_angle_10",
-  }[key];
-  const rows = state.filtered;
-  Plotly.react("timelineChart", [
-    {
-      x: rows.map((row) => row.game_date),
-      y: rows.map((row) => row[key]),
-      mode: "markers",
-      name: label,
-      marker: { size: 6, color: "#778899", opacity: 0.45 },
-      text: rows.map(hoverText),
-      hovertemplate: "%{text}<extra></extra>",
-    },
-    {
-      x: rows.map((row) => row.game_date),
-      y: rows.map((row) => row[rollingKey]),
-      mode: "lines",
-      name: "10-HR rolling average",
-      line: { width: 3, color: "#178f9c" },
-      hovertemplate: `10-HR avg: %{y:.1f} ${unit}<extra></extra>`,
-    },
-  ], {
-    ...baseLayout,
-    xaxis: { title: "Date", gridcolor: "#edf0f2" },
-    yaxis: { title: `${label} (${unit})`, gridcolor: "#edf0f2" },
-    legend: { orientation: "h", y: 1.08 },
-  }, plotConfig);
+  bindPointDetails(chart, detailTarget);
 }
 
 function filterNumber(row, key, minimumId, maximumId) {
@@ -530,7 +671,8 @@ function renderTable() {
 }
 
 function resetFilters() {
-  [...$("seasonFilter").options, ...$("teamFilter").options].forEach((option) => { option.selected = true; });
+  document.querySelectorAll('#seasonFilter input[type="checkbox"], #teamFilter input[type="checkbox"]')
+    .forEach((input) => { input.checked = true; });
   applyFilters();
 }
 
@@ -563,8 +705,6 @@ $("demoBtn").addEventListener("click", loadDemo);
 $("csvUpload").addEventListener("change", (event) => uploadCsv(event.target.files[0]));
 $("seasonFilter").addEventListener("change", applyFilters);
 $("teamFilter").addEventListener("change", applyFilters);
-$("curveMetric").addEventListener("change", renderCareer);
-$("timelineMetric").addEventListener("change", renderTimeline);
 $("resetFilters").addEventListener("click", resetFilters);
 $("downloadBtn").addEventListener("click", downloadCsv);
 $("resetLogFilters").addEventListener("click", () => resetLogFilters());

@@ -18,15 +18,14 @@ No React, Next.js, database, Docker, or Node build step is required.
 - Select the correct matching player
 - Query Baseball Savant for home runs
 - Choose start/end year and regular/postseason coverage
-- Career home-run progression chart
+- Distance, exit-velocity, and launch-angle density distributions
+- Season-weighted MLB home-run average reference lines from Baseball Savant
 - EV90 calculated from each loaded player's home-run exit velocities
-- Hover details: date, distance, EV, launch angle, pitch, pitch velo, xBA/xwOBA, bat speed when available, runners, inning/count, description
-- Distance / exit-velocity / launch-angle timeline
-- 10-HR rolling averages
+- Fixed detail panels that keep chart observations visible
 - HR by season
-- Latest-team ballpark spray chart using Savant hit coordinates
+- Zoomable latest-team ballpark spray chart with discrete season colors
 - Clickable spray markers and log links to exact Baseball Savant videos
-- Season and team filters
+- Season and team checkbox filters
 - Collapsible, sortable home-run log with date and metric filters
 - CSV download
 - Savant CSV upload fallback

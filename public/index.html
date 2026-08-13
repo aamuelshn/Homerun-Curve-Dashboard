@@ -64,25 +64,46 @@
       <div id="metrics" class="metrics"></div>
 
       <div class="filter-bar">
-        <label>Seasons <select id="seasonFilter" multiple></select></label>
-        <label>Teams <select id="teamFilter" multiple></select></label>
-        <label>Career curve metric
-          <select id="curveMetric">
-            <option value="home_run_number">Career HR number</option>
-            <option value="home_run_distance">Distance</option>
-            <option value="launch_speed">Exit velocity</option>
-            <option value="launch_angle">Launch angle</option>
-          </select>
-        </label>
+        <fieldset class="filter-group">
+          <legend>Seasons</legend>
+          <div id="seasonFilter" class="checkbox-list"></div>
+        </fieldset>
+        <fieldset class="filter-group">
+          <legend>Teams</legend>
+          <div id="teamFilter" class="checkbox-list"></div>
+        </fieldset>
         <button id="resetFilters" class="secondary" type="button">Reset filters</button>
       </div>
 
       <section class="chart-section">
-        <h3 id="curveTitle">Career home-run progression</h3>
-        <div id="careerChart" class="chart"></div>
+        <div class="chart-heading">
+          <h3>Home-run metric distributions</h3>
+          <span id="benchmarkLabel" class="chart-meta"></span>
+        </div>
+        <div class="distribution-layout">
+          <div class="distribution-charts">
+            <section class="distribution-panel">
+              <h4>Distance</h4>
+              <div id="distanceDistribution" class="chart distribution"></div>
+            </section>
+            <section class="distribution-panel">
+              <h4>Exit velocity</h4>
+              <div id="exitVelocityDistribution" class="chart distribution"></div>
+            </section>
+            <section class="distribution-panel">
+              <h4>Launch angle</h4>
+              <div id="launchAngleDistribution" class="chart distribution"></div>
+            </section>
+          </div>
+          <aside id="distributionDetail" class="detail-rail" aria-live="polite">
+            <p class="detail-kicker">HOME-RUN DETAILS</p>
+            <h4>No home run selected</h4>
+          </aside>
+        </div>
+        <p class="benchmark-source">MLB reference: <a href="https://baseballsavant.mlb.com/statcast_search" target="_blank" rel="noopener noreferrer">Baseball Savant</a> regular-season home runs, weighted across the selected seasons. 2026 data through Aug. 12.</p>
       </section>
 
-      <div class="two-col">
+      <div class="overview-grid">
         <section class="chart-section">
           <h3>Home runs by season</h3>
           <div id="seasonChart" class="chart small"></div>
@@ -92,21 +113,15 @@
             <h3>Home-run spray chart</h3>
             <span id="stadiumLabel" class="chart-meta"></span>
           </div>
-          <div id="launchChart" class="chart spray"></div>
+          <div class="spray-layout">
+            <div id="launchChart" class="chart spray"></div>
+            <aside id="sprayDetail" class="detail-rail" aria-live="polite">
+              <p class="detail-kicker">HOME-RUN DETAILS</p>
+              <h4>No home run selected</h4>
+            </aside>
+          </div>
         </section>
       </div>
-
-      <section class="chart-section">
-        <div class="timeline-head">
-          <h3>Metric timeline</h3>
-          <select id="timelineMetric">
-            <option value="home_run_distance">Distance</option>
-            <option value="launch_speed">Exit velocity</option>
-            <option value="launch_angle">Launch angle</option>
-          </select>
-        </div>
-        <div id="timelineChart" class="chart"></div>
-      </section>
 
       <details class="table-section" open>
         <summary>
