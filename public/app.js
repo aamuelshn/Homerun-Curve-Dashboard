@@ -243,9 +243,9 @@ const plotConfig = {
 const baseLayout = {
   paper_bgcolor: "rgba(0, 0, 0, 0)",
   plot_bgcolor: "rgba(0, 0, 0, 0)",
-  font: { color: "#2c2f2d", family: "Inter, system-ui, sans-serif" },
+  font: { color: "#f7f7f5", family: "Inter, system-ui, sans-serif" },
   margin: { l: 60, r: 25, t: 22, b: 55 },
-  hoverlabel: { align: "left" },
+  hoverlabel: { align: "left", bgcolor: "#171717", bordercolor: "#ff7a1a", font: { color: "#ffffff" } },
 };
 
 function videoUrl(row) {
@@ -395,9 +395,9 @@ function renderDistribution(metric, detailTarget) {
       y: density.y,
       mode: "lines",
       name: "Player HR density",
-      line: { width: 3, color: "#159b68" },
+      line: { width: 3, color: "#ff7a1a" },
       fill: "tozeroy",
-      fillcolor: "rgba(21, 155, 104, 0.13)",
+      fillcolor: "rgba(255, 122, 26, 0.16)",
       hoverinfo: "skip",
     });
     traces.push({
@@ -422,7 +422,7 @@ function renderDistribution(metric, detailTarget) {
     x1: benchmark,
     y0: -rugDepth,
     y1: density.maxDensity * 1.08,
-    line: { color: "#c95e24", width: 2, dash: "dot" },
+    line: { color: "#ffffff", width: 2, dash: "dot" },
   }] : [];
   const annotations = [];
   if (Number.isFinite(benchmark)) {
@@ -433,7 +433,7 @@ function renderDistribution(metric, detailTarget) {
       showarrow: false,
       xanchor: "left",
       xshift: 6,
-      font: { size: 11, color: "#9f451d" },
+      font: { size: 11, color: "#ffffff" },
     });
   }
   if (!rows.length) {
@@ -444,17 +444,17 @@ function renderDistribution(metric, detailTarget) {
       yref: "paper",
       text: "No home runs match these filters",
       showarrow: false,
-      font: { color: "#667085" },
+      font: { color: "#aaa9a4" },
     });
   }
 
   Plotly.react(chart, traces, {
     ...baseLayout,
     margin: { l: 58, r: 20, t: 28, b: 54 },
-    xaxis: { title: `${metric.label} (${metric.unit})`, gridcolor: "#e8e7e3", fixedrange: true },
+    xaxis: { title: `${metric.label} (${metric.unit})`, gridcolor: "#343431", fixedrange: true },
     yaxis: {
       title: "Density",
-      gridcolor: "#e8e7e3",
+      gridcolor: "#343431",
       rangemode: "tozero",
       range: values.length ? [-rugDepth * 1.08, density.maxDensity * 1.18] : undefined,
       fixedrange: true,
@@ -481,12 +481,12 @@ function renderSeason() {
     x: years,
     y: years.map((year) => counts[year]),
     type: "bar",
-    marker: { color: "#159b68" },
+    marker: { color: "#ff7a1a" },
     hovertemplate: "%{x}: %{y} HR<extra></extra>",
   }], {
     ...baseLayout,
-    xaxis: { title: "Season", gridcolor: "#e8e7e3" },
-    yaxis: { title: "Home runs", gridcolor: "#e8e7e3" },
+    xaxis: { title: "Season", gridcolor: "#343431" },
+    yaxis: { title: "Home runs", gridcolor: "#343431" },
   }, plotConfig);
 }
 
@@ -521,8 +521,8 @@ function renderSprayChart() {
       y: fieldY,
       mode: "lines",
       fill: "toself",
-      fillcolor: "#e2f0e5",
-      line: { color: "#39785b", width: 3 },
+      fillcolor: "#171717",
+      line: { color: "#ff7a1a", width: 3 },
       hoverinfo: "skip",
       showlegend: false,
     },
@@ -531,7 +531,7 @@ function renderSprayChart() {
       y: [63.64, 127.28, 63.64, 0, 63.64],
       mode: "lines",
       fill: "toself",
-      fillcolor: "#d7b58c",
+      fillcolor: "#2a170a",
       line: { color: "#fff", width: 2 },
       hoverinfo: "skip",
       showlegend: false,
@@ -562,14 +562,14 @@ function renderSprayChart() {
     text: `${park.wall[index]}'`,
     showarrow: false,
     yshift: 13,
-    font: { size: 11, color: "#39785b" },
+    font: { size: 11, color: "#ff9b52" },
   }));
   annotations.push(
-    { x: -280, y: 225, text: "LF", showarrow: false, font: { size: 11, color: "#667085" } },
-    { x: 0, y: 445, text: "CF", showarrow: false, font: { size: 11, color: "#667085" } },
-    { x: 280, y: 225, text: "RF", showarrow: false, font: { size: 11, color: "#667085" } },
+    { x: -280, y: 225, text: "LF", showarrow: false, font: { size: 11, color: "#aaa9a4" } },
+    { x: 0, y: 445, text: "CF", showarrow: false, font: { size: 11, color: "#aaa9a4" } },
+    { x: 280, y: 225, text: "RF", showarrow: false, font: { size: 11, color: "#aaa9a4" } },
   );
-  if (!rows.length) annotations.push({ x: 0, y: 240, text: "Spray coordinates unavailable", showarrow: false, font: { color: "#667085" } });
+  if (!rows.length) annotations.push({ x: 0, y: 240, text: "Spray coordinates unavailable", showarrow: false, font: { color: "#aaa9a4" } });
 
   Plotly.react(chart, traces, {
     ...baseLayout,
