@@ -241,9 +241,9 @@ const plotConfig = {
 };
 
 const baseLayout = {
-  paper_bgcolor: "#fff",
-  plot_bgcolor: "#fff",
-  font: { color: "#17324a", family: "Inter, system-ui, sans-serif" },
+  paper_bgcolor: "rgba(0, 0, 0, 0)",
+  plot_bgcolor: "rgba(0, 0, 0, 0)",
+  font: { color: "#2c2f2d", family: "Inter, system-ui, sans-serif" },
   margin: { l: 60, r: 25, t: 22, b: 55 },
   hoverlabel: { align: "left" },
 };
@@ -395,9 +395,9 @@ function renderDistribution(metric, detailTarget) {
       y: density.y,
       mode: "lines",
       name: "Player HR density",
-      line: { width: 3, color: "#178f9c" },
+      line: { width: 3, color: "#159b68" },
       fill: "tozeroy",
-      fillcolor: "rgba(23, 143, 156, 0.13)",
+      fillcolor: "rgba(21, 155, 104, 0.13)",
       hoverinfo: "skip",
     });
     traces.push({
@@ -422,7 +422,7 @@ function renderDistribution(metric, detailTarget) {
     x1: benchmark,
     y0: -rugDepth,
     y1: density.maxDensity * 1.08,
-    line: { color: "#c2410c", width: 2, dash: "dot" },
+    line: { color: "#c95e24", width: 2, dash: "dot" },
   }] : [];
   const annotations = [];
   if (Number.isFinite(benchmark)) {
@@ -433,7 +433,7 @@ function renderDistribution(metric, detailTarget) {
       showarrow: false,
       xanchor: "left",
       xshift: 6,
-      font: { size: 11, color: "#9a3412" },
+      font: { size: 11, color: "#9f451d" },
     });
   }
   if (!rows.length) {
@@ -451,10 +451,10 @@ function renderDistribution(metric, detailTarget) {
   Plotly.react(chart, traces, {
     ...baseLayout,
     margin: { l: 58, r: 20, t: 28, b: 54 },
-    xaxis: { title: `${metric.label} (${metric.unit})`, gridcolor: "#edf0f2", fixedrange: true },
+    xaxis: { title: `${metric.label} (${metric.unit})`, gridcolor: "#e8e7e3", fixedrange: true },
     yaxis: {
       title: "Density",
-      gridcolor: "#edf0f2",
+      gridcolor: "#e8e7e3",
       rangemode: "tozero",
       range: values.length ? [-rugDepth * 1.08, density.maxDensity * 1.18] : undefined,
       fixedrange: true,
@@ -481,12 +481,12 @@ function renderSeason() {
     x: years,
     y: years.map((year) => counts[year]),
     type: "bar",
-    marker: { color: "#178f9c" },
+    marker: { color: "#159b68" },
     hovertemplate: "%{x}: %{y} HR<extra></extra>",
   }], {
     ...baseLayout,
-    xaxis: { title: "Season", gridcolor: "#edf0f2" },
-    yaxis: { title: "Home runs", gridcolor: "#edf0f2" },
+    xaxis: { title: "Season", gridcolor: "#e8e7e3" },
+    yaxis: { title: "Home runs", gridcolor: "#e8e7e3" },
   }, plotConfig);
 }
 
@@ -724,3 +724,26 @@ document.querySelectorAll("th[data-sort] button").forEach((button) => {
     renderTable();
   });
 });
+
+const topNavLinks = [...document.querySelectorAll(".topnav a")];
+topNavLinks.forEach((link) => {
+  link.addEventListener("click", () => {
+    topNavLinks.forEach((item) => item.classList.remove("active"));
+    link.classList.add("active");
+  });
+});
+
+function updateActiveNav() {
+  const current = topNavLinks.reduce((active, link) => {
+    const section = document.querySelector(link.getAttribute("href"));
+    return section && section.getBoundingClientRect().top <= 100 ? link : active;
+  }, topNavLinks[0]);
+  topNavLinks.forEach((link) => link.classList.toggle("active", link === current));
+}
+
+window.addEventListener("scroll", updateActiveNav, { passive: true });
+updateActiveNav();
+
+if (window.lucide) {
+  window.lucide.createIcons({ attrs: { "stroke-width": 1.8 } });
+}
