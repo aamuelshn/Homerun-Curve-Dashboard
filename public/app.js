@@ -245,7 +245,7 @@ const baseLayout = {
   plot_bgcolor: "rgba(0, 0, 0, 0)",
   font: { color: "#f7f7f5", family: "Inter, system-ui, sans-serif" },
   margin: { l: 60, r: 25, t: 22, b: 55 },
-  hoverlabel: { align: "left", bgcolor: "#171717", bordercolor: "#ff7a1a", font: { color: "#ffffff" } },
+  hoverlabel: { align: "left", bgcolor: "#171717", bordercolor: "#2ed47a", font: { color: "#ffffff" } },
 };
 
 function videoUrl(row) {
@@ -395,9 +395,9 @@ function renderDistribution(metric, detailTarget) {
       y: density.y,
       mode: "lines",
       name: "Player HR density",
-      line: { width: 3, color: "#ff7a1a" },
+      line: { width: 3, color: "#2ed47a" },
       fill: "tozeroy",
-      fillcolor: "rgba(255, 122, 26, 0.16)",
+      fillcolor: "rgba(46, 212, 122, 0.16)",
       hoverinfo: "skip",
     });
     traces.push({
@@ -481,7 +481,7 @@ function renderSeason() {
     x: years,
     y: years.map((year) => counts[year]),
     type: "bar",
-    marker: { color: "#ff7a1a" },
+    marker: { color: "#2ed47a" },
     hovertemplate: "%{x}: %{y} HR<extra></extra>",
   }], {
     ...baseLayout,
@@ -522,7 +522,7 @@ function renderSprayChart() {
       mode: "lines",
       fill: "toself",
       fillcolor: "#171717",
-      line: { color: "#ff7a1a", width: 3 },
+      line: { color: "#2ed47a", width: 3 },
       hoverinfo: "skip",
       showlegend: false,
     },
@@ -531,7 +531,7 @@ function renderSprayChart() {
       y: [63.64, 127.28, 63.64, 0, 63.64],
       mode: "lines",
       fill: "toself",
-      fillcolor: "#2a170a",
+      fillcolor: "#0d291a",
       line: { color: "#fff", width: 2 },
       hoverinfo: "skip",
       showlegend: false,
@@ -562,7 +562,7 @@ function renderSprayChart() {
     text: `${park.wall[index]}'`,
     showarrow: false,
     yshift: 13,
-    font: { size: 11, color: "#ff9b52" },
+    font: { size: 11, color: "#75e8aa" },
   }));
   annotations.push(
     { x: -280, y: 225, text: "LF", showarrow: false, font: { size: 11, color: "#aaa9a4" } },

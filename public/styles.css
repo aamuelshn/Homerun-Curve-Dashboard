@@ -8,12 +8,12 @@
   --line: #2b2b29;
   --line-strong: #464642;
   --soft: #1b1b19;
-  --accent: #ff7a1a;
-  --accent-dark: #ff9b52;
-  --accent-soft: #2a170a;
+  --accent: #2ed47a;
+  --accent-dark: #75e8aa;
+  --accent-soft: #0d291a;
   --benchmark: #ffffff;
   --danger: #ff6b6b;
-  --link: #ff9b52;
+  --link: #75e8aa;
   --shadow: 0 24px 70px rgba(0, 0, 0, 0.58);
 }
 
@@ -58,7 +58,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 summary:focus-visible {
-  outline: 3px solid rgba(255, 122, 26, 0.34);
+  outline: 3px solid rgba(46, 212, 122, 0.34);
   outline-offset: 2px;
 }
 
@@ -164,9 +164,9 @@ summary:focus-visible {
   width: 8px;
   height: 8px;
   background: var(--accent);
-  border: 2px solid #ffe1ca;
+  border: 2px solid #cef7df;
   border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(255, 122, 26, 0.18);
+  box-shadow: 0 0 0 2px rgba(46, 212, 122, 0.18);
 }
 
 .intro-band {
@@ -295,7 +295,7 @@ summary:focus-visible {
 
 .search-row:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.16);
+  box-shadow: 0 0 0 3px rgba(46, 212, 122, 0.16);
 }
 
 .input-icon {
@@ -534,7 +534,7 @@ summary:focus-visible {
 
 .metric:nth-child(3)::before,
 .metric:nth-child(6)::before {
-  background: #ff9b52;
+  background: #75e8aa;
 }
 
 .metric .label {
