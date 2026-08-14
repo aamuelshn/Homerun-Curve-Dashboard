@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
-from index import app
+import index as api
 
-client = TestClient(app)
+client = TestClient(api.app)
 
 def test_health():
     response = client.get('/api/health')
@@ -20,6 +20,7 @@ def test_root_loads():
     assert 'id="selectAllTeams"' in response.text
     assert 'id="curveMetric"' not in response.text
     assert 'id="careerChart"' not in response.text
+    assert '<video' not in response.text
 
     stylesheet = client.get('/styles.css')
     assert stylesheet.status_code == 200
@@ -35,6 +36,27 @@ def test_root_loads():
     assert 'Deselect all' in script.text
     assert 'content.mlb.com/images/headshots/current/60x60/' in script.text
     assert 'dragmode: "pan"' in script.text
+    assert 'preload="none"' in script.text
+    assert '/api/video/embed?' in script.text
+
+
+def test_video_embed_returns_lazy_playback_metadata(monkeypatch):
+    monkeypatch.setattr(
+        api,
+        'resolve_home_run_video',
+        lambda game_pk, at_bat_number, pitch_number: {
+            'media_url': 'https://example.mlb.com/home-run.mp4',
+            'poster_url': 'https://example.mlb.com/home-run.jpg',
+            'external_url': 'https://baseballsavant.mlb.com/sporty-videos?playId=play-id',
+            'title': 'Home run',
+        },
+    )
+
+    response = client.get('/api/video/embed?game_pk=746362&at_bat_number=18&pitch_number=4')
+
+    assert response.status_code == 200
+    assert response.json()['media_url'].endswith('home-run.mp4')
+    assert response.headers['cache-control'].startswith('public, max-age=86400')
 
 def test_demo_returns_home_runs():
     response = client.get('/api/demo')

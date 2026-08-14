@@ -20,7 +20,13 @@ if str(ROOT) not in sys.path:
 from src.config import STATCAST_METRICS_START_YEAR
 from src.data import HomeRunDataError, career_summary, normalize_home_runs
 from src.demo import make_demo_home_runs
-from src.mlb_client import MLBVideoError, PlayerLookupError, resolve_home_run_video_url, search_players
+from src.mlb_client import (
+    MLBVideoError,
+    PlayerLookupError,
+    resolve_home_run_video,
+    resolve_home_run_video_url,
+    search_players,
+)
 from src.savant_client import SavantDataError, fetch_career_home_runs
 
 PUBLIC = ROOT.parent / "public"
@@ -105,6 +111,21 @@ def home_run_video(
     except MLBVideoError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return RedirectResponse(url, status_code=302)
+
+
+@app.get("/api/video/embed")
+def home_run_video_embed(
+    response: Response,
+    game_pk: int = Query(gt=0),
+    at_bat_number: int = Query(gt=0),
+    pitch_number: int | None = Query(default=None, gt=0),
+) -> dict[str, str]:
+    try:
+        video = resolve_home_run_video(game_pk, at_bat_number, pitch_number)
+    except MLBVideoError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    response.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=604800"
+    return video
 
 
 @app.get("/api/search")

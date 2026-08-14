@@ -9,7 +9,13 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from .config import MLB_GAME_FEED_URL, MLB_PEOPLE_SEARCH_URL, MLB_PERSON_URL, SAVANT_VIDEO_URL
+from .config import (
+    MLB_GAME_CONTENT_URL,
+    MLB_GAME_FEED_URL,
+    MLB_PEOPLE_SEARCH_URL,
+    MLB_PERSON_URL,
+    SAVANT_VIDEO_URL,
+)
 from .models import PlayerCandidate
 
 
@@ -151,12 +157,11 @@ def _game_plays(game_pk: int) -> tuple[dict[str, Any], ...]:
     return tuple(play for play in plays if isinstance(play, dict))
 
 
-def resolve_home_run_video_url(
+def _home_run_play_id(
     game_pk: int,
     at_bat_number: int,
     pitch_number: int | None = None,
 ) -> str:
-    """Resolve a Savant video URL from Statcast's game and at-bat identifiers."""
     target_indexes = {int(at_bat_number) - 1, int(at_bat_number)}
     candidates = [
         play
@@ -178,6 +183,83 @@ def resolve_home_run_video_url(
         in_play = [event for event in events if event.get("details", {}).get("isInPlay")]
         selected = (in_play or events)[-1] if (in_play or events) else None
         if selected:
-            return SAVANT_VIDEO_URL.format(play_id=selected["playId"])
+            return str(selected["playId"])
 
     raise MLBVideoError("MLB does not have a video play ID for this home run.")
+
+
+@lru_cache(maxsize=64)
+def _game_highlights(game_pk: int) -> tuple[dict[str, Any], ...]:
+    session = _session()
+    try:
+        response = session.get(
+            MLB_GAME_CONTENT_URL.format(game_pk=int(game_pk)),
+            timeout=(8, 30),
+        )
+        response.raise_for_status()
+        items = (
+            response.json()
+            .get("highlights", {})
+            .get("highlights", {})
+            .get("items", [])
+        )
+    except (requests.RequestException, ValueError) as exc:
+        raise MLBVideoError(f"MLB could not load video media for game {game_pk}.") from exc
+    return tuple(item for item in items if isinstance(item, dict))
+
+
+def resolve_home_run_video_url(
+    game_pk: int,
+    at_bat_number: int,
+    pitch_number: int | None = None,
+) -> str:
+    """Resolve a Savant video page from Statcast's game and at-bat identifiers."""
+    play_id = _home_run_play_id(game_pk, at_bat_number, pitch_number)
+    return SAVANT_VIDEO_URL.format(play_id=play_id)
+
+
+def resolve_home_run_video(
+    game_pk: int,
+    at_bat_number: int,
+    pitch_number: int | None = None,
+) -> dict[str, str]:
+    """Resolve playable MLB media and a Savant fallback for a home run."""
+    play_id = _home_run_play_id(game_pk, at_bat_number, pitch_number)
+    external_url = SAVANT_VIDEO_URL.format(play_id=play_id)
+    highlight = next(
+        (item for item in _game_highlights(int(game_pk)) if item.get("guid") == play_id),
+        None,
+    )
+    if not highlight:
+        raise MLBVideoError("MLB does not have playable media for this home run.")
+
+    playbacks = [
+        playback
+        for playback in (highlight.get("playbacks") or [])
+        if isinstance(playback, dict) and playback.get("url")
+    ]
+    preferred = next(
+        (playback for playback in playbacks if playback.get("name") == "mp4Avc"),
+        None,
+    )
+    mp4 = preferred or next(
+        (playback for playback in playbacks if str(playback["url"]).lower().endswith(".mp4")),
+        None,
+    )
+    if not mp4:
+        raise MLBVideoError("MLB does not provide a browser-playable MP4 for this home run.")
+
+    image = highlight.get("image")
+    image_cuts = image.get("cuts", []) if isinstance(image, dict) else []
+    cuts = [
+        cut
+        for cut in image_cuts
+        if isinstance(cut, dict) and cut.get("aspectRatio") == "16:9" and cut.get("src")
+    ]
+    poster = min(cuts, key=lambda cut: abs(int(cut.get("width") or 0) - 640), default={})
+    return {
+        "media_url": str(mp4["url"]),
+        "poster_url": str(poster.get("src") or ""),
+        "external_url": external_url,
+        "title": str(highlight.get("title") or highlight.get("headline") or "Home run video"),
+    }

@@ -65,3 +65,45 @@ def test_home_run_video_uses_exact_at_bat_and_pitch(monkeypatch) -> None:
     url = mlb_client.resolve_home_run_video_url(746362, 18, 4)
 
     assert url.endswith("playId=0940f201-99d4-426b-9f0e-f6686c25473f")
+
+
+def test_home_run_video_returns_playable_media_and_poster(monkeypatch) -> None:
+    play_id = "0940f201-99d4-426b-9f0e-f6686c25473f"
+    plays = (
+        {
+            "about": {"atBatIndex": 17},
+            "result": {"eventType": "home_run"},
+            "playEvents": [
+                {
+                    "pitchNumber": 4,
+                    "playId": play_id,
+                    "details": {"isInPlay": True},
+                },
+            ],
+        },
+    )
+    highlights = (
+        {
+            "guid": play_id,
+            "title": "Shohei Ohtani's solo home run (32)",
+            "playbacks": [
+                {"name": "hlsCloud", "url": "https://example.mlb.com/video.m3u8"},
+                {"name": "mp4Avc", "url": "https://example.mlb.com/video.mp4"},
+            ],
+            "image": {
+                "cuts": [
+                    {"aspectRatio": "16:9", "width": 320, "src": "https://example.mlb.com/320.jpg"},
+                    {"aspectRatio": "16:9", "width": 640, "src": "https://example.mlb.com/640.jpg"},
+                ],
+            },
+        },
+    )
+    monkeypatch.setattr(mlb_client, "_game_plays", lambda game_pk: plays)
+    monkeypatch.setattr(mlb_client, "_game_highlights", lambda game_pk: highlights)
+
+    video = mlb_client.resolve_home_run_video(746362, 18, 4)
+
+    assert video["media_url"] == "https://example.mlb.com/video.mp4"
+    assert video["poster_url"] == "https://example.mlb.com/640.jpg"
+    assert video["external_url"].endswith(f"playId={play_id}")
+    assert video["title"] == "Shohei Ohtani's solo home run (32)"

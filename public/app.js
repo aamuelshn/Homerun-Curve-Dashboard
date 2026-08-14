@@ -374,7 +374,7 @@ function densityCurve(values, benchmark) {
   return { x, y, maxDensity: Math.max(...y) };
 }
 
-function detailMarkup(row, metric = null) {
+function detailMarkup(row, metric = null, includeVideoSlot = false) {
   if (!row) return '<p class="detail-kicker">HOME-RUN DETAILS</p><h4>No home run selected</h4>';
   const url = videoUrl(row);
   const statRows = [
@@ -393,22 +393,61 @@ function detailMarkup(row, metric = null) {
       <div><dt>Pitch</dt><dd>${escapeHtml(row.pitch_label || "—")} · ${fmt(row.release_speed, 1)} mph</dd></div>
     </dl>
     <p class="detail-description">${escapeHtml(row.des || "")}</p>
-    ${url ? `<a class="video-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">▶ Watch video</a>` : ""}
+    ${includeVideoSlot && url ? '<div class="video-embed-slot" aria-live="polite"><div class="video-loading"><span></span>Loading MLB video…</div></div>' : ""}
+    ${url ? `<a class="video-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${includeVideoSlot ? "Open on Savant ↗" : "▶ Watch video"}</a>` : ""}
   `;
 }
 
-function bindPointDetails(chart, target, metric = null) {
+function videoEmbedUrl(row) {
+  const gamePk = Number(row.game_pk);
+  const atBatNumber = Number(row.at_bat_number);
+  if (!Number.isInteger(gamePk) || !Number.isInteger(atBatNumber)) return "";
+  const params = new URLSearchParams({ game_pk: gamePk, at_bat_number: atBatNumber });
+  const pitchNumber = Number(row.pitch_number);
+  if (Number.isInteger(pitchNumber) && pitchNumber > 0) params.set("pitch_number", pitchNumber);
+  return `/api/video/embed?${params}`;
+}
+
+async function loadEmbeddedVideo(row, target, requestId) {
+  const endpoint = videoEmbedUrl(row);
+  const slot = target.querySelector(".video-embed-slot");
+  if (!endpoint || !slot) return;
+
+  try {
+    const response = await fetch(endpoint);
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.detail || "MLB video is unavailable.");
+    if (target.dataset.videoRequest !== requestId) return;
+    slot.innerHTML = `
+      <video class="home-run-video" controls playsinline preload="none" poster="${escapeHtml(payload.poster_url || "")}" aria-label="${escapeHtml(payload.title || "Home run video")}">
+        <source src="${escapeHtml(payload.media_url)}" type="video/mp4" />
+      </video>
+    `;
+    const fallback = target.querySelector(".video-link");
+    if (fallback && payload.external_url) fallback.href = payload.external_url;
+  } catch (error) {
+    if (target.dataset.videoRequest !== requestId) return;
+    slot.innerHTML = `<p class="video-error">${escapeHtml(error.message || "MLB video is unavailable.")}</p>`;
+  }
+}
+
+function bindPointDetails(chart, target, metric = null, { embedVideo = false } = {}) {
+  let pinned = false;
   chart.removeAllListeners?.("plotly_hover");
   chart.removeAllListeners?.("plotly_click");
   chart.on("plotly_hover", (event) => {
+    if (pinned) return;
     const row = event.points?.find((point) => point.customdata)?.customdata;
     if (row) target.innerHTML = detailMarkup(row, metric);
   });
   chart.on("plotly_click", (event) => {
     const row = event.points?.find((point) => point.customdata)?.customdata;
-    if (row) target.innerHTML = detailMarkup(row, metric);
-    const url = row ? videoUrl(row) : "";
-    if (url) window.open(url, "_blank", "noopener,noreferrer");
+    if (!row) return;
+    pinned = true;
+    const requestId = `${Date.now()}-${Math.random()}`;
+    target.dataset.videoRequest = requestId;
+    target.innerHTML = detailMarkup(row, metric, embedVideo);
+    if (embedVideo) loadEmbeddedVideo(row, target, requestId);
   });
 }
 
@@ -626,7 +665,7 @@ function renderSprayChart() {
     scrollZoom: true,
     modeBarButtonsToRemove: ["lasso2d", "select2d", "toImage", "hoverClosestCartesian", "hoverCompareCartesian"],
   });
-  bindPointDetails(chart, detailTarget);
+  bindPointDetails(chart, detailTarget, null, { embedVideo: true });
 }
 
 function filterNumber(row, key, minimumId, maximumId) {
