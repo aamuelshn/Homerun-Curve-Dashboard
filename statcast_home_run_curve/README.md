@@ -23,7 +23,7 @@ No React, Next.js, database, Docker, or Node build step is required.
 - EV90 calculated from each loaded player's home-run exit velocities
 - Fixed detail panels that keep chart observations visible
 - HR by season
-- Zoomable latest-team ballpark spray chart with discrete season colors
+- Zoomable latest-team ballpark spray chart with discrete season colors and resizable details
 - On-demand MLB video players for spray markers, with Baseball Savant fallback links
 - Season and team checkbox filters
 - Collapsible, sortable home-run log with date and metric filters

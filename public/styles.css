@@ -723,10 +723,53 @@ summary:focus-visible {
 }
 
 .spray-layout {
+  --spray-detail-width: 245px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 245px;
+  grid-template-columns: minmax(0, 1fr) 12px var(--spray-detail-width);
   align-items: stretch;
-  gap: 12px;
+  gap: 0;
+}
+
+.spray-resize-handle {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  min-width: 12px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: col-resize;
+  outline: 0;
+  touch-action: none;
+  place-items: center;
+}
+
+.spray-resize-handle::before {
+  position: absolute;
+  inset: 0 5px;
+  background: var(--line);
+  content: "";
+}
+
+.spray-resize-handle span {
+  position: relative;
+  width: 4px;
+  height: 42px;
+  background: #62625e;
+  border-radius: 3px;
+  transition: background 120ms ease, height 120ms ease;
+}
+
+.spray-resize-handle:hover span,
+.spray-resize-handle:focus-visible span,
+.spray-layout.is-resizing .spray-resize-handle span {
+  height: 54px;
+  background: var(--accent);
+}
+
+body.is-resizing-spray {
+  cursor: col-resize;
+  user-select: none;
 }
 
 .detail-rail {
@@ -1131,6 +1174,11 @@ td.desc {
 
   .spray-layout {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .spray-resize-handle {
+    display: none;
   }
 
   .spray-layout > .detail-rail {

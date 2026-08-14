@@ -6,6 +6,16 @@ const state = {
   logSort: { key: "home_run_number", direction: "asc" },
 };
 
+const SPRAY_DETAIL_MIN_WIDTH = 245;
+const SPRAY_DETAIL_PREFERRED_WIDTH = 390;
+const SPRAY_DETAIL_MAX_WIDTH = 520;
+const SPRAY_CHART_MIN_WIDTH = 390;
+let sprayDetailWidth = SPRAY_DETAIL_MIN_WIDTH;
+let sprayDetailUserSized = false;
+let sprayDetailAutoExpanded = false;
+let sprayResizeFrame = 0;
+let sprayLayoutObserver = null;
+
 const BALLPARKS = {
   ARI: { name: "Chase Field", wall: [330, 374, 407, 374, 335] },
   ATH: { name: "Sutter Health Park", wall: [330, 365, 403, 365, 325] },
@@ -83,6 +93,110 @@ function escapeHtml(value) {
     '"': "&quot;",
     "'": "&#39;",
   })[character]);
+}
+
+function scheduleSprayChartResize() {
+  window.cancelAnimationFrame(sprayResizeFrame);
+  sprayResizeFrame = window.requestAnimationFrame(() => {
+    const chart = $("launchChart");
+    if (window.Plotly && chart?.data) window.Plotly.Plots.resize(chart);
+  });
+}
+
+function sprayDetailWidthLimit() {
+  const layoutWidth = $("sprayLayout")?.getBoundingClientRect().width || 0;
+  return Math.max(
+    SPRAY_DETAIL_MIN_WIDTH,
+    Math.min(SPRAY_DETAIL_MAX_WIDTH, layoutWidth - SPRAY_CHART_MIN_WIDTH - 12),
+  );
+}
+
+function setSprayDetailWidth(width, { source = "layout" } = {}) {
+  const layout = $("sprayLayout");
+  const handle = $("sprayResizeHandle");
+  if (!layout || !handle) return SPRAY_DETAIL_MIN_WIDTH;
+
+  if (window.matchMedia("(max-width: 700px)").matches) {
+    layout.style.removeProperty("--spray-detail-width");
+    scheduleSprayChartResize();
+    return SPRAY_DETAIL_MIN_WIDTH;
+  }
+
+  const maximum = sprayDetailWidthLimit();
+  sprayDetailWidth = Math.round(Math.min(maximum, Math.max(SPRAY_DETAIL_MIN_WIDTH, width)));
+  if (source === "user") sprayDetailUserSized = true;
+  layout.style.setProperty("--spray-detail-width", `${sprayDetailWidth}px`);
+  handle.setAttribute("aria-valuemax", String(Math.round(maximum)));
+  handle.setAttribute("aria-valuenow", String(sprayDetailWidth));
+  scheduleSprayChartResize();
+  return sprayDetailWidth;
+}
+
+function autoExpandSprayDetail() {
+  if (sprayDetailUserSized || sprayDetailAutoExpanded) return;
+  const width = setSprayDetailWidth(SPRAY_DETAIL_PREFERRED_WIDTH, { source: "auto" });
+  sprayDetailAutoExpanded = width > SPRAY_DETAIL_MIN_WIDTH;
+}
+
+function setupSprayDetailResize() {
+  const layout = $("sprayLayout");
+  const handle = $("sprayResizeHandle");
+  if (!layout || !handle) return;
+
+  let pointerId = null;
+  let startX = 0;
+  let startWidth = SPRAY_DETAIL_MIN_WIDTH;
+
+  const finishResize = () => {
+    if (pointerId === null) return;
+    if (handle.hasPointerCapture?.(pointerId)) handle.releasePointerCapture(pointerId);
+    pointerId = null;
+    layout.classList.remove("is-resizing");
+    document.body.classList.remove("is-resizing-spray");
+    scheduleSprayChartResize();
+  };
+
+  handle.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    pointerId = event.pointerId;
+    startX = event.clientX;
+    startWidth = $("sprayDetail").getBoundingClientRect().width;
+    handle.setPointerCapture?.(pointerId);
+    layout.classList.add("is-resizing");
+    document.body.classList.add("is-resizing-spray");
+    event.preventDefault();
+  });
+  handle.addEventListener("pointermove", (event) => {
+    if (event.pointerId !== pointerId) return;
+    setSprayDetailWidth(startWidth - (event.clientX - startX), { source: "user" });
+  });
+  handle.addEventListener("pointerup", finishResize);
+  handle.addEventListener("pointercancel", finishResize);
+  handle.addEventListener("dblclick", () => {
+    const target = sprayDetailWidth <= SPRAY_DETAIL_MIN_WIDTH + 8
+      ? SPRAY_DETAIL_PREFERRED_WIDTH
+      : SPRAY_DETAIL_MIN_WIDTH;
+    setSprayDetailWidth(target, { source: "user" });
+  });
+  handle.addEventListener("keydown", (event) => {
+    const widths = {
+      ArrowLeft: sprayDetailWidth + 20,
+      ArrowRight: sprayDetailWidth - 20,
+      Home: SPRAY_DETAIL_MIN_WIDTH,
+      End: sprayDetailWidthLimit(),
+    };
+    if (!(event.key in widths)) return;
+    event.preventDefault();
+    setSprayDetailWidth(widths[event.key], { source: "user" });
+  });
+
+  const clampToLayout = () => setSprayDetailWidth(sprayDetailWidth);
+  if (window.ResizeObserver) {
+    sprayLayoutObserver = new ResizeObserver(clampToLayout);
+    sprayLayoutObserver.observe(layout);
+  }
+  else window.addEventListener("resize", clampToLayout);
+  setSprayDetailWidth(sprayDetailWidth);
 }
 
 async function jsonFetch(url, options = {}) {
@@ -418,6 +532,7 @@ async function loadEmbeddedVideo(row, target, requestId) {
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.detail || "MLB video is unavailable.");
     if (target.dataset.videoRequest !== requestId) return;
+    if (target.id === "sprayDetail") autoExpandSprayDetail();
     slot.innerHTML = `
       <video class="home-run-video" controls playsinline preload="none" poster="${escapeHtml(payload.poster_url || "")}" aria-label="${escapeHtml(payload.title || "Home run video")}">
         <source src="${escapeHtml(payload.media_url)}" type="video/mp4" />
@@ -646,8 +761,8 @@ function renderSprayChart() {
   Plotly.react(chart, traces, {
     ...baseLayout,
     margin: { l: 20, r: 20, t: 10, b: 58 },
-    xaxis: { range: [-365, 365], visible: false, fixedrange: false },
-    yaxis: { range: [-25, 485], visible: false, fixedrange: false, scaleanchor: "x", scaleratio: 1 },
+    xaxis: { range: [-365, 365], visible: false, fixedrange: false, constrain: "domain" },
+    yaxis: { range: [-25, 485], visible: false, fixedrange: false, scaleanchor: "x", scaleratio: 1, constrain: "domain" },
     annotations,
     dragmode: "pan",
     legend: {
@@ -823,6 +938,7 @@ function updateActiveNav() {
 }
 
 window.addEventListener("scroll", updateActiveNav, { passive: true });
+setupSprayDetailResize();
 updateActiveNav();
 
 if (window.lucide) {

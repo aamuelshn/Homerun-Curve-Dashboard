@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Home Run Career Curve</title>
   <meta name="description" content="Search an MLB hitter and explore every Statcast home run with interactive distributions, spray charts, and video." />
-  <link rel="stylesheet" href="/styles.css?v=20260814-video-embed" />
+  <link rel="stylesheet" href="/styles.css?v=20260814-resizable-details" />
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 </head>
@@ -168,8 +168,11 @@
               </div>
               <span id="stadiumLabel" class="panel-meta"></span>
             </div>
-            <div class="spray-layout">
+            <div id="sprayLayout" class="spray-layout">
               <div id="launchChart" class="chart spray"></div>
+              <div id="sprayResizeHandle" class="spray-resize-handle" role="separator" aria-label="Resize home-run details" aria-orientation="vertical" aria-controls="sprayDetail" aria-valuemin="245" aria-valuemax="520" aria-valuenow="245" tabindex="0" title="Resize home-run details">
+                <span aria-hidden="true"></span>
+              </div>
               <aside id="sprayDetail" class="detail-rail" aria-live="polite">
                 <p class="detail-kicker">HOME-RUN DETAILS</p>
                 <h4>No home run selected</h4>
@@ -225,6 +228,6 @@
       </section>
     </main>
   </div>
-  <script src="/app.js?v=20260814-video-embed"></script>
+  <script src="/app.js?v=20260814-resizable-details"></script>
 </body>
 </html>

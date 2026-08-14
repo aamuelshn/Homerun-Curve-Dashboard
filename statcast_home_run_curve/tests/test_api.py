@@ -18,6 +18,7 @@ def test_root_loads():
     assert 'id="playerHeadshot"' in response.text
     assert 'id="selectAllSeasons"' in response.text
     assert 'id="selectAllTeams"' in response.text
+    assert 'id="sprayResizeHandle"' in response.text
     assert 'id="curveMetric"' not in response.text
     assert 'id="careerChart"' not in response.text
     assert '<video' not in response.text
@@ -38,6 +39,8 @@ def test_root_loads():
     assert 'dragmode: "pan"' in script.text
     assert 'preload="none"' in script.text
     assert '/api/video/embed?' in script.text
+    assert 'setupSprayDetailResize' in script.text
+    assert 'Plotly.Plots.resize' in script.text
 
 
 def test_video_embed_returns_lazy_playback_metadata(monkeypatch):
